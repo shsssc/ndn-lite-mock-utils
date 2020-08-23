@@ -26,11 +26,13 @@
 #include "ndn-lite/encode/ndn-rule-storage.h"
 #include "mockhw.h"
 
+//make IDE happy
+#ifndef STATE_NAME
 #define STATE_NAME has-smoke
 #define DEVICE_NAME smoke-detector
 #define SERVICE_ID 51
 #define REFRESH_PERIOD 500
-
+#endif
 //code generation macros
 #define str(s) #s
 #define xstr(s) str(s)

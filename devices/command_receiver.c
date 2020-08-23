@@ -26,11 +26,13 @@
 #include "ndn-lite/encode/ndn-rule-storage.h"
 #include "mockhw.h"
 
+//make IDE happy
+#ifndef STATE_NAME
 #define MAX_VALUE 120
 #define STATE_NAME brightness
 #define DEVICE_NAME led
 #define SERVICE_ID NDN_SD_LED
-
+#endif
 //we generate the code
 #define str(s) #s
 #define xstr(s) str(s)
