@@ -33,4 +33,4 @@ note: after the device runs, you can use ` watch ../hardware-interface/mock-util
 #define REFRESH_PERIOD 500
 ```
 
-note: after the device runs, you can use `../hardware-interface/mock-util smoke-detector has-smoke 1` to modify hardware states.
+note: after the device runs, you can use `../hardware-interface/mock-util smoke-detector has-smoke <new value>` to modify hardware states.
