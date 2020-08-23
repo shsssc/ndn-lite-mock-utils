@@ -19,13 +19,13 @@ set value:
 read value:
 
 ```shell
-read value: ./mock-util led brightness
+./mock-util led brightness
 ```
 
 monitor value:
 
 ```shell
-monitor value: ./mock-util led brightness
+watch ./mock-util led brightness
 ```
 
 ## Usage of C library
@@ -75,3 +75,4 @@ mkdir -p /tmp/ndnlite-mock/$1
 printf $3 > /tmp/ndnlite-mock/$1/$2
 ```
 
+Note that this library has **completely ignored possible race-conditions** on value read/write. It's assumed that the value is small enough such that kernel is likely to make single read/write atomic.
