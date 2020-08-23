@@ -26,7 +26,16 @@
 #include "ndn-lite/encode/ndn-rule-storage.h"
 #include "mockhw.h"
 
-#define NDN_SD_SMOKE 51
+#define MAX_VALUE 120
+#define STATE_NAME brightness
+#define DEVICE_NAME led
+#define SERVICE_ID NDN_SD_LED
+
+//we generate the code
+#define str(s) #s
+#define xstr(s) str(s)
+#define STATE_NAME_GEN xstr(STATE_NAME)
+#define DEVICE_NAME_GEN xstr(DEVICE_NAME)
 
 // DEVICE manufacture-created private key
 uint8_t secp256r1_prv_key_bytes[32] = {0};
@@ -48,6 +57,8 @@ ndn_unix_face_t *face;
 uint8_t buf[4096];
 // Wether the program is running or not
 bool running;
+// A global var to keep the brightness
+uint8_t data_value = 0;
 
 //static ndn_trust_schema_rule_t same_room;
 //static ndn_trust_schema_rule_t controller_only;
@@ -57,7 +68,7 @@ int load_bootstrapping_info()
   FILE *fp;
   char buf[255];
   char *buf_ptr;
-  fp = fopen("smoke.txt", "r");
+  fp = fopen("command_receiver.txt", "r");
   if (fp == NULL)
     exit(1);
   size_t i = 0;
@@ -122,20 +133,79 @@ int load_bootstrapping_info()
   return 0;
 }
 
+void on_command(const ps_event_context_t *context, const ps_event_t *event, void *userdata)
+{
+  printf("RECEIVED NEW COMMAND\n");
+  printf("Command id: %.*s\n", event->data_id_len, event->data_id);
+  printf("Command payload: %.*s\n", event->payload_len, event->payload);
+  printf("Scope: %s\n", context->scope);
+
+  int new_val;
+  // Execute the function
+  if (event->payload)
+  {
+    // new_val = *real_payload;
+    char content_str[128] = {0};
+    memcpy(content_str, event->payload, event->payload_len);
+    content_str[event->payload_len] = '\0';
+    new_val = atoi(content_str);
+  }
+  else
+  {
+    new_val = 0xFF;
+  }
+  if (new_val != 0xFF)
+  {
+    if ((new_val > 0) != (data_value > 0))
+    {
+      if (new_val > 0)
+      {
+        printf("Switch on device.\n");
+      }
+      else
+      {
+        printf("Turn off device.\n");
+      }
+    }
+    if (new_val < MAX_VALUE)
+    {
+      data_value = new_val;
+      if (data_value > 0)
+      {
+        printf("Successfully set the value = %u\n", data_value);
+      }
+    }
+    else
+    {
+      data_value = MAX_VALUE;
+      printf("Exceeding range. Set the value = %u\n", data_value);
+    }
+    ps_event_t data_content = {
+        .data_id = STATE_NAME_GEN,
+        .data_id_len = strlen(STATE_NAME_GEN),
+        .payload = &data_value,
+        .payload_len = 1};
+    ps_publish_content(SERVICE_ID, &data_content);
+    writeToDevice(DEVICE_NAME_GEN, STATE_NAME_GEN, data_value);
+  }
+  else
+  {
+    printf("Query the value = %u\n", data_value);
+  }
+}
+
 void periodic_publish(size_t param_size, uint8_t *param_value)
 {
   static ndn_time_ms_t last;
-  int hasSmoke = readFromDevice("smoke-detector", "has-smoke");
-  printf("hassmoke: %d\n", hasSmoke);
   ps_event_t event = {
-      .data_id = "has-smoke",
-      .data_id_len = strlen("has-smoke"),
-      .payload = &hasSmoke,
+      .data_id = STATE_NAME_GEN,
+      .data_id_len = strlen(STATE_NAME_GEN),
+      .payload = &data_value,
       .payload_len = 1};
 
   if (ndn_time_now_ms() - last >= 400000)
   {
-    ps_publish_content(NDN_SD_SMOKE, &event);
+    ps_publish_content(SERVICE_ID, &event);
     last = ndn_time_now_ms();
   }
   ndn_msgqueue_post(NULL, periodic_publish, 0, NULL);
@@ -143,7 +213,7 @@ void periodic_publish(size_t param_size, uint8_t *param_value)
 
 void after_bootstrapping()
 {
-  writeToDevice("smoke-detector", "has-smoke", 0);
+  ps_subscribe_to_command(SERVICE_ID, "", on_command, NULL);
   periodic_publish(0, NULL);
 }
 
@@ -168,19 +238,14 @@ int main(int argc, char *argv[])
 
   // CREAT A MULTICAST FACE
   face = ndn_unix_face_construct(NDN_NFD_DEFAULT_ADDR, true);
-  // face = ndn_udp_unicast_face_construct(INADDR_ANY, htons((uint16_t) 2000), inet_addr("224.0.23.170"), htons((uint16_t) 56363));
-  // in_port_t multicast_port = htons((uint16_t) 56363);
-  // in_addr_t multicast_ip = inet_addr("224.0.23.170");
-  // face = ndn_udp_multicast_face_construct(INADDR_ANY, multicast_ip, multicast_port);
 
   // LOAD SERVICES PROVIDED BY SELF DEVICE
   uint8_t capability[1];
-  capability[0] = NDN_SD_SMOKE;
+  capability[0] = SERVICE_ID;
 
   // SET UP SERVICE DISCOVERY
-  sd_add_or_update_self_service(NDN_SD_SMOKE, true, 1); // state code 1 means normal
-  ndn_ac_register_encryption_key_request(NDN_SD_SMOKE);
-  //ndn_ac_register_access_request(NDN_SD_LED);
+  sd_add_or_update_self_service(SERVICE_ID, true, 1); // state code 1 means normal
+  ndn_ac_register_encryption_key_request(SERVICE_ID);
 
   // START BOOTSTRAPPING
   ndn_bootstrapping_info_t booststrapping_info = {
@@ -200,7 +265,7 @@ int main(int argc, char *argv[])
   while (running)
   {
     ndn_forwarder_process();
-    usleep(1000);
+    usleep(100);
   }
 
   // DESTROY FACE
