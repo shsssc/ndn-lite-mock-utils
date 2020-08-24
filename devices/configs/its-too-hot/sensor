@@ -1,0 +1,5 @@
+#define STATE_NAME temp
+#define DEVICE_NAME temperature-sensor
+#define SERVICE_ID 59
+#define REFRESH_PERIOD 500
+

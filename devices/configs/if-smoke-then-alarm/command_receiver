@@ -1,0 +1,5 @@
+#define MAX_VALUE 1
+#define STATE_NAME alarm_on
+#define DEVICE_NAME alarm
+#define SERVICE_ID (NDN_SD_LED+1)
+

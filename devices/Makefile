@@ -4,7 +4,7 @@ LIBS  = -lndn-lite
 CFLAGS = -O3 -I ../hardware-interface/
 SRCS = $(wildcard *.c)
 PROGS = $(patsubst %.c,%,$(SRCS))
-TASK = senarial 1
+TASK = if-smoke-then-alarm
 all: $(PROGS)
 
 %: %.c

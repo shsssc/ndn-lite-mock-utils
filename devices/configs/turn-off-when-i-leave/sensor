@@ -1,0 +1,5 @@
+#define STATE_NAME has-movement
+#define DEVICE_NAME motion-sensor
+#define SERVICE_ID 51
+#define REFRESH_PERIOD 500
+
