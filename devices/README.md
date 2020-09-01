@@ -1,6 +1,6 @@
 # NDN-lite device mock for testing
 
-Generate binaries that act as iot devices in network. Those devices will have "hardware states" mocked with  `../hardware-interface`. Thus, programmers can read/write those mocked hardware states with utilities of that library. In this way, automation tasks can be easily tested by generating mock devices.
+Generate code and binaries that act as IoT devices in ndn-lite network. Those devices will have "hardware states" mocked with  `../hardware-interface`. Thus, programmers can read/write those mocked hardware states with utilities of that library. In this way, automation tasks can be easily tested on generating mock devices.
 
 ## How to use
 
